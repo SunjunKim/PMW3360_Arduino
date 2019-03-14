@@ -336,19 +336,21 @@ void loop() {
       Serial.println("WASTED");
 
     // update only if a movement is detected.
-    if(dx != 0 || dy != 0)
+    if(elapsed > 200)
     {
-      //Serial.print(dx);
-      //Serial.print("\t");
-      //Serial.println(dy);
-      
-      Mouse.move(dx, dy, 0);
-      
-      dx = 0;
-      dy = 0;
-      lastTS = micros();
+      if(dx != 0 || dy != 0)
+      {
+        //Serial.print(dx);
+        //Serial.print("\t");
+        //Serial.println(dy);
+        
+        Mouse.move(dx, dy, 0);
+        
+        dx = 0;
+        dy = 0;
+        lastTS = micros();
+      }
     }
-    
   }
 
   if(elapsed > 2000000 && inBurst) // inactivate the burst mode after 2 sec
