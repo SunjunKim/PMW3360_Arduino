@@ -22,7 +22,7 @@ Module --- Arduino
     RS --- (NONE)
     GD --- GND
     MT --- Pin 3 (PD0, INT0) -> movement interrupt
-    SS --- Pin 11 (PB7)
+    SS --- Pin 10 (PB6)
     SC --- SCK (PB1)
     MO --- MOSI (PB2)
     MI --- MISO (PB3)
