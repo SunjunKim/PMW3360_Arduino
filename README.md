@@ -2,9 +2,9 @@
 Interfacing PixArt PMW3360 with Arduino
 
 # Parts info
-PMW3360 Module: https://www.tindie.com/products/jkicklighter/pmw3360-motion-sensor/ by JACK Enterprises
-Base source code: https://github.com/mrjohnk/PMW3360DM-T2QU by mrjohnk
-Arduino Micro: https://store.arduino.cc/arduino-micro
+* PMW3360 Module: https://www.tindie.com/products/jkicklighter/pmw3360-motion-sensor/ by JACK Enterprises
+* Base source code: https://github.com/mrjohnk/PMW3360DM-T2QU by mrjohnk
+* Arduino Micro: https://store.arduino.cc/arduino-micro
 
 # Pin connection
 ## Description
