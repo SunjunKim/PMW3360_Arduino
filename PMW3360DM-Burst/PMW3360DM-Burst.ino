@@ -2,6 +2,11 @@
 #include <SPI.h>
 #include <avr/pgmspace.h>
 
+// Configurations
+// The CPI value should be in between 100 -- 12000
+#define CPI       1600
+#define DEBOUNCE  10   //unit = ms.
+
 // Registers
 #define Product_ID  0x00
 #define Revision_ID 0x01
@@ -53,12 +58,20 @@
 #define Raw_Data_Burst  0x64
 #define LiftCutoff_Tune2  0x65
 
-//Set this to what pin your "INT0" hardware interrupt feature is on
-#define Motion_Interrupt_Pin 3
-// The CPI value should be in between 100 -- 12000
-#define CPI     1200
+//Set this to a pin your interrupt feature is on
+#define Motion_Interrupt_Pin 7
+#define Btn1_Interrupt_Pin 1  // left button
+#define Btn2_Interrupt_Pin 0  // right button
+
 
 const int ncs = 10;  //This is the SPI "slave select" pin that the sensor is hooked up to
+const int reset = 8;
+
+unsigned long lastCheck = 0;
+bool Btn1 = false;
+bool Btn2 = false;
+uint8_t Btn1_buffer = 0xFF;
+uint8_t Btn2_buffer = 0xFF;
 
 byte initComplete = 0;
 volatile byte readflag = 0;
@@ -73,16 +86,18 @@ unsigned long lastTS;
 extern const unsigned short firmware_length;
 extern const unsigned char firmware_data[];
 
-
-
 void setup() {
   Serial.begin(9600);
 
   pinMode (ncs, OUTPUT);
-
-  pinMode(Motion_Interrupt_Pin, INPUT);
-  digitalWrite(Motion_Interrupt_Pin, HIGH);
+  pinMode(reset, INPUT);
+  
+  pinMode(Motion_Interrupt_Pin, INPUT_PULLUP);
+  pinMode(Btn1_Interrupt_Pin, INPUT_PULLUP);
+  pinMode(Btn2_Interrupt_Pin, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(Motion_Interrupt_Pin), UpdatePointer, FALLING);
+  attachInterrupt(digitalPinToInterrupt(Btn1_Interrupt_Pin), Btn1ISR, FALLING);
+  attachInterrupt(digitalPinToInterrupt(Btn2_Interrupt_Pin), Btn2ISR, FALLING);
 
   SPI.begin();
   SPI.setDataMode(SPI_MODE3);
@@ -94,11 +109,10 @@ void setup() {
 
   dx = dy = 0;
 
-  delay(2000);
+  delay(1000);
 
   dispRegisters();
   initComplete = 9;
-
 
   lastTS = micros();
   Mouse.begin();
@@ -197,8 +211,15 @@ void setCPI(int cpi)
   
 }
 
-
 void performStartup(void) {
+  // hard reset
+  digitalWrite(reset, HIGH);
+  pinMode(reset, OUTPUT);
+  digitalWrite(reset, LOW);
+  delay(10);
+  digitalWrite(reset, HIGH);
+  pinMode(reset, INPUT);  
+  
   adns_com_end(); // ensure that the serial port is reset
   adns_com_begin(); // ensure that the serial port is reset
   adns_com_end(); // ensure that the serial port is reset
@@ -234,6 +255,64 @@ void ReadPointer() {
   dy += y;
 
   movementflag = 1;
+}
+
+// Use interrupt to maximize the response time of button press.
+void Btn1ISR(void) {
+  if(!Btn1)
+  {
+    Mouse.press(MOUSE_LEFT);
+    Btn1_buffer = 0x00;
+    lastCheck = micros();
+    Btn1 = true;
+  }
+}
+
+void Btn2ISR(void) {
+  if(!Btn2)
+  {
+    Mouse.press(MOUSE_RIGHT);
+    Btn2_buffer = 0x00;
+    lastCheck = micros();
+    Btn2 = true;
+  }
+  
+}
+
+void check_button_state() 
+{
+  unsigned long elapsed = micros() - lastCheck;
+  if(elapsed > (DEBOUNCE * 1000UL / 8))
+  {
+    lastCheck = micros();
+  }
+  else
+  {
+    return;
+  }
+  
+  int btn1_state = digitalRead(Btn1_Interrupt_Pin);
+  int btn2_state = digitalRead(Btn2_Interrupt_Pin);
+  Btn1_buffer = Btn1_buffer << 1 | btn1_state;
+  Btn2_buffer = Btn2_buffer << 1 | btn2_state;
+
+  if(Btn1)
+  {
+    if(Btn1_buffer == 0xFF)
+    {
+      Mouse.release(MOUSE_LEFT);
+      Btn1 = false;
+    }
+  }
+
+  if(Btn2)
+  {
+    if(Btn2_buffer == 0xFF)
+    {
+      Mouse.release(MOUSE_RIGHT);
+      Btn2 = false;
+    }
+  }
 }
 
 void UpdatePointer(void) {  
@@ -286,15 +365,16 @@ void loop() {
   byte burstBuffer[12];
   unsigned long elapsed = micros() - lastTS;
 
+  check_button_state();
+
   if(readflag)
   {
     if(!inBurst) startBurst();  // this will turn on inBurst flag
     readflag = 0;
   }
 
-  if(inBurst)
+  if(inBurst && elapsed > 200)  // polling interval : more than > 0.8 ms.
   {
-
     adns_com_begin();
     SPI.beginTransaction(SPISettings(16000000, MSBFIRST, SPI_MODE3));
 
