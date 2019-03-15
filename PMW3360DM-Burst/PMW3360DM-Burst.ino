@@ -289,18 +289,22 @@ void loop() {
   if(readflag)
   {
     if(!inBurst) startBurst();  // this will turn on inBurst flag
+    readflag = 0;
   }
 
-  if(inBurst && readflag)
+  if(inBurst)
   {
-    readflag = 0;
+
     adns_com_begin();
+    SPI.beginTransaction(SPISettings(16000000, MSBFIRST, SPI_MODE3));
 
     SPI.transfer(Motion_Burst);    
     delayMicroseconds(35); // waits for tSRAD
           
     SPI.transfer(burstBuffer, 12);
     delayMicroseconds(1); // tSCLK-NCS for read operation is 120ns
+
+    SPI.endTransaction();
     /*
     BYTE[00] = Motion    = if the 7th bit is 1, a motion is detected.
     BYTE[01] = Observation  
@@ -332,28 +336,22 @@ void loop() {
       
     adns_com_end();
 
-    if(motion == 0)
-      Serial.println("WASTED");
-
     // update only if a movement is detected.
-    if(elapsed > 200)
+    if(dx != 0 || dy != 0)
     {
-      if(dx != 0 || dy != 0)
-      {
-        //Serial.print(dx);
-        //Serial.print("\t");
-        //Serial.println(dy);
-        
-        Mouse.move(dx, dy, 0);
-        
-        dx = 0;
-        dy = 0;
-        lastTS = micros();
-      }
+      //Serial.print(dx);
+      //Serial.print("\t");
+      //Serial.println(dy);
+
+      Mouse.move(dx, dy, 0);
+
+      dx = 0;
+      dy = 0;
+      lastTS = micros();
     }
   }
 
-  if(elapsed > 2000000 && inBurst) // inactivate the burst mode after 2 sec
+  if(elapsed > 500000 && inBurst) // inactivate the burst mode after 2 sec
   {
     endBurst();
   }
