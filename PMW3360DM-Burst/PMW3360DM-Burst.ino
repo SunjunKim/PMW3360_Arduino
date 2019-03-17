@@ -64,8 +64,8 @@
 #define Btn2_Interrupt_Pin 0  // right button
 
 
-const int ncs = 10;  //This is the SPI "slave select" pin that the sensor is hooked up to
-const int reset = 8;
+const int ncs = 10;  // This is the SPI "slave select" pin that the sensor is hooked up to
+const int reset = 8; // Optional
 
 unsigned long lastCheck = 0;
 bool Btn1 = false;
@@ -160,7 +160,7 @@ void adns_upload_firmware() {
   Serial.println("Uploading firmware...");
 
   //Write 0 to Rest_En bit of Config2 register to disable Rest mode.
-  adns_write_reg(Config2, 0x20);
+  adns_write_reg(Config2, 0x00);
 
   // write 0x1d in SROM_enable reg for initializing
   adns_write_reg(SROM_Enable, 0x1d);
@@ -190,11 +190,6 @@ void adns_upload_firmware() {
   //Write 0x00 to Config2 register for wired mouse or 0x20 for wireless mouse design.
   adns_write_reg(Config2, 0x00);
 
-  int cpival = (CPI / 100)-1;
-
-  // set initial CPI resolution
-  adns_write_reg(Config1, cpival);
-
   adns_com_end();
 }
 
@@ -213,18 +208,21 @@ void setCPI(int cpi)
 
 void performStartup(void) {
   // hard reset
-  digitalWrite(reset, HIGH);
-  pinMode(reset, OUTPUT);
-  digitalWrite(reset, LOW);
-  delay(10);
-  digitalWrite(reset, HIGH);
-  pinMode(reset, INPUT);  
-  
   adns_com_end(); // ensure that the serial port is reset
   adns_com_begin(); // ensure that the serial port is reset
   adns_com_end(); // ensure that the serial port is reset
+  
+  adns_write_reg(Shutdown, 0xb6); // Shutdown first
+  delay(300);
+  
+  adns_com_begin(); // drop and raise ncs to reset spi port
+  delayMicroseconds(40);
+  adns_com_end();
+  delayMicroseconds(40);
+  
   adns_write_reg(Power_Up_Reset, 0x5a); // force reset
   delay(50); // wait for it to reboot
+  
   // read registers 0x02 to 0x06 (and discard the data)
   adns_read_reg(Motion);
   adns_read_reg(Delta_X_L);
@@ -234,6 +232,8 @@ void performStartup(void) {
   // upload the firmware
   adns_upload_firmware();
   delay(10);
+
+  setCPI(CPI);
   Serial.println("Optical Chip Initialized");
 }
 
