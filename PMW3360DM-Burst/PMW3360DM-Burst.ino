@@ -5,7 +5,7 @@
 // Configurations
 // The CPI value should be in between 100 -- 12000
 #define CPI       1600
-#define DEBOUNCE  10   //unit = ms.
+#define DEBOUNCE  30   //unit = ms.
 
 // Registers
 #define Product_ID  0x00
@@ -373,10 +373,10 @@ void loop() {
     readflag = 0;
   }
 
-  if(inBurst && elapsed > 200)  // polling interval : more than > 0.8 ms.
+  if(inBurst && elapsed > 500)  // polling interval : more than > 0.8 ms.
   {
     adns_com_begin();
-    SPI.beginTransaction(SPISettings(16000000, MSBFIRST, SPI_MODE3));
+    SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE3));
 
     SPI.transfer(Motion_Burst);    
     delayMicroseconds(35); // waits for tSRAD
@@ -476,4 +476,5 @@ unsigned long readNumber()
   }
   return 0UL;
 }
+
 
