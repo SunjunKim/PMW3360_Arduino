@@ -1,11 +1,9 @@
-#include <Mouse.h>
 #include <SPI.h>
 #include <avr/pgmspace.h>
 
 // Configurations
 // The CPI value should be in between 100 -- 12000
 #define CPI       1600
-#define DEBOUNCE  30   //unit = ms.
 
 // Registers
 #define Product_ID  0x00
@@ -68,19 +66,8 @@ const int ncs = 10;  // This is the SPI "slave select" pin that the sensor is ho
 const int reset = 8; // Optional
 
 unsigned long lastCheck = 0;
-bool Btn1 = false;
-bool Btn2 = false;
-uint8_t Btn1_buffer = 0xFF;
-uint8_t Btn2_buffer = 0xFF;
-
 byte initComplete = 0;
 volatile byte readflag = 0;
-volatile byte movementflag = 0;
-volatile long dx, dy;
-
-
-bool inBurst = false;
-unsigned long lastTS;
 
 //Be sure to add the SROM file into this sketch via "Sketch->Add File"
 extern const unsigned short firmware_length;
@@ -93,11 +80,7 @@ void setup() {
   pinMode(reset, INPUT);
   
   pinMode(Motion_Interrupt_Pin, INPUT_PULLUP);
-  pinMode(Btn1_Interrupt_Pin, INPUT_PULLUP);
-  pinMode(Btn2_Interrupt_Pin, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(Motion_Interrupt_Pin), UpdatePointer, FALLING);
-  attachInterrupt(digitalPinToInterrupt(Btn1_Interrupt_Pin), Btn1ISR, FALLING);
-  attachInterrupt(digitalPinToInterrupt(Btn2_Interrupt_Pin), Btn2ISR, FALLING);
 
   SPI.begin();
   SPI.setDataMode(SPI_MODE3);
@@ -107,15 +90,10 @@ void setup() {
 
   performStartup();
 
-  dx = dy = 0;
-
   delay(1000);
 
   dispRegisters();
   initComplete = 9;
-
-  lastTS = micros();
-  Mouse.begin();
 }
 
 void adns_com_begin() {
@@ -250,69 +228,6 @@ void ReadPointer() {
   
   int x = xh<<8 | xl;
   int y = yh<<8 | yl;
-
-  dx += x;
-  dy += y;
-
-  movementflag = 1;
-}
-
-// Use interrupt to maximize the response time of button press.
-void Btn1ISR(void) {
-  if(!Btn1)
-  {
-    Mouse.press(MOUSE_LEFT);
-    Btn1_buffer = 0x00;
-    lastCheck = micros();
-    Btn1 = true;
-  }
-}
-
-void Btn2ISR(void) {
-  if(!Btn2)
-  {
-    Mouse.press(MOUSE_RIGHT);
-    Btn2_buffer = 0x00;
-    lastCheck = micros();
-    Btn2 = true;
-  }
-  
-}
-
-void check_button_state() 
-{
-  unsigned long elapsed = micros() - lastCheck;
-  if(elapsed > (DEBOUNCE * 1000UL / 8))
-  {
-    lastCheck = micros();
-  }
-  else
-  {
-    return;
-  }
-  
-  int btn1_state = digitalRead(Btn1_Interrupt_Pin);
-  int btn2_state = digitalRead(Btn2_Interrupt_Pin);
-  Btn1_buffer = Btn1_buffer << 1 | btn1_state;
-  Btn2_buffer = Btn2_buffer << 1 | btn2_state;
-
-  if(Btn1)
-  {
-    if(Btn1_buffer == 0xFF)
-    {
-      Mouse.release(MOUSE_LEFT);
-      Btn1 = false;
-    }
-  }
-
-  if(Btn2)
-  {
-    if(Btn2_buffer == 0xFF)
-    {
-      Mouse.release(MOUSE_RIGHT);
-      Btn2 = false;
-    }
-  }
 }
 
 void UpdatePointer(void) {  
@@ -347,94 +262,33 @@ void dispRegisters(void) {
   digitalWrite(ncs, HIGH);
 }
 
-// Getting into burst mode (read data from the sensor continously)
-void startBurst()
-{
-  adns_write_reg(Motion_Burst, 0x00);
-  inBurst = true;      
-  lastTS = micros();
-}
-
-// Getting out from burst mode (mode change to idle)
-void endBurst()
-{
-  inBurst = false;
-}
-
 void loop() {
-  byte burstBuffer[12];
-  unsigned long elapsed = micros() - lastTS;
-
-  check_button_state();
-
-  if(readflag)
+  if(readflag)  // do things when something is moved.
   {
-    if(!inBurst) startBurst();  // this will turn on inBurst flag
     readflag = 0;
   }
 
-  if(inBurst && elapsed > 500)  // polling interval : more than > 0.5 ms.
+  adns_write_reg(Frame_Capture, 0x83);
+  adns_write_reg(Frame_Capture, 0xc5);  
+  delay(20);
+  
+  adns_com_begin();
+  SPI.transfer(Raw_Data_Burst & 0x7f) ;
+  delayMicroseconds(20);
+ 
+  for(int i=0;i<1296;i++)
   {
-    adns_com_begin();
-    SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE3));
+    char pixel = SPI.transfer(0);
+    delayMicroseconds(20);
 
-    SPI.transfer(Motion_Burst);    
-    delayMicroseconds(35); // waits for tSRAD
-          
-    SPI.transfer(burstBuffer, 12);
-    delayMicroseconds(1); // tSCLK-NCS for read operation is 120ns
-
-    SPI.endTransaction();
-    /*
-    BYTE[00] = Motion    = if the 7th bit is 1, a motion is detected.
-    BYTE[01] = Observation  
-    BYTE[02] = Delta_X_L = dx (LSB)
-    BYTE[03] = Delta_X_H = dx (MSB) 
-    BYTE[04] = Delta_Y_L = dy (LSB)
-    BYTE[05] = Delta_Y_H = dy (MSB)
-    BYTE[06] = SQUAL     = Surface Quality register, max 0x80
-                         - Number of features on the surface = SQUAL * 8
-    BYTE[07] = Raw_Data_Sum   = It reports the upper byte of an 18‐bit counter which sums all 1296 raw data in the current frame;
-                               * Avg value = Raw_Data_Sum * 1024 / 1296
-    BYTE[08] = Maximum_Raw_Data  = Max raw data value in current frame, max=127
-    BYTE[09] = Minimum_Raw_Data  = Min raw data value in current frame, max=127
-    BYTE[10] = Shutter_Upper     = Shutter LSB
-    BYTE[11] = Shutter_Lower     = Shutter MSB, Shutter = shutter is adjusted to keep the average raw data values within normal operating ranges
-    */
-
-    int motion = (burstBuffer[0] & 0x80) > 0;
-    int xl = burstBuffer[2];
-    int xh = burstBuffer[3];
-    int yl = burstBuffer[4];
-    int yh = burstBuffer[5];
+    Serial.print(pixel, DEC);
+    Serial.print(' ');
+  }
     
-    int x = xh<<8 | xl;
-    int y = yh<<8 | yl;
+  Serial.println();
+  adns_com_end();
 
-    dx += x;
-    dy += y;
-      
-    adns_com_end();
-
-    // update only if a movement is detected.
-    if(dx != 0 || dy != 0)
-    {
-      //Serial.print(dx);
-      //Serial.print("\t");
-      //Serial.println(dy);
-      //Serial.println(burstBuffer[6]); // SQUAL
-      Mouse.move(dx, dy, 0);
-
-      dx = 0;
-      dy = 0;
-      lastTS = micros();
-    }
-  }
-
-  if(elapsed > 500000 && inBurst) // inactivate the burst mode after 500 ms
-  {
-    endBurst();
-  }
+  
 
   if(Serial.available() > 0)
   {
@@ -448,6 +302,7 @@ void loop() {
     }
   }
 
+  delay(100);
 }
 
 unsigned long readNumber()
