@@ -43,7 +43,7 @@ void draw()
     {
       int pixel = val[i*36+j];
       fill(pixel);
-      rect(i*10, (36-j)*10, 10, 10);
+      rect(i*10, (35-j)*10, 10, 10);
     }
   }
 }

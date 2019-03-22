@@ -288,8 +288,6 @@ void loop() {
   Serial.println();
   adns_com_end();
 
-  
-
   if(Serial.available() > 0)
   {
     char c = Serial.read();
@@ -302,7 +300,7 @@ void loop() {
     }
   }
 
-  delay(100);
+  delay(20);
 }
 
 unsigned long readNumber()
@@ -331,5 +329,3 @@ unsigned long readNumber()
   }
   return 0UL;
 }
-
-
