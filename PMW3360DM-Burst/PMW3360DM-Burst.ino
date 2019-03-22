@@ -74,12 +74,9 @@ uint8_t Btn1_buffer = 0xFF;
 uint8_t Btn2_buffer = 0xFF;
 
 byte initComplete = 0;
-volatile byte readflag = 0;
-volatile byte movementflag = 0;
-volatile long dx, dy;
-
-
 bool inBurst = false;
+long dx, dy;
+
 unsigned long lastTS;
 
 //Be sure to add the SROM file into this sketch via "Sketch->Add File"
@@ -92,10 +89,8 @@ void setup() {
   pinMode (ncs, OUTPUT);
   pinMode(reset, INPUT);
   
-  pinMode(Motion_Interrupt_Pin, INPUT_PULLUP);
   pinMode(Btn1_Interrupt_Pin, INPUT_PULLUP);
   pinMode(Btn2_Interrupt_Pin, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(Motion_Interrupt_Pin), UpdatePointer, FALLING);
   attachInterrupt(digitalPinToInterrupt(Btn1_Interrupt_Pin), Btn1ISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(Btn2_Interrupt_Pin), Btn2ISR, FALLING);
 
@@ -111,7 +106,7 @@ void setup() {
 
   delay(1000);
 
-  dispRegisters();
+  //dispRegisters();
   initComplete = 9;
 
   lastTS = micros();
@@ -203,7 +198,6 @@ void setCPI(int cpi)
 
   Serial.print("Set cpi to ");
   Serial.println(cpi);
-  
 }
 
 void performStartup(void) {
@@ -237,29 +231,9 @@ void performStartup(void) {
   Serial.println("Optical Chip Initialized");
 }
 
-
-void ReadPointer() {
-  adns_write_reg(Motion, 0x01);
-  //write 0x01 to Motion register and read from it to freeze the motion values and make them available
-  adns_read_reg(Motion);
-  
-  int xl = (int)adns_read_reg(Delta_X_L);
-  int xh = (int)adns_read_reg(Delta_X_H);
-  int yl = (int)adns_read_reg(Delta_Y_L);
-  int yh = (int)adns_read_reg(Delta_Y_H);
-  
-  int x = xh<<8 | xl;
-  int y = yh<<8 | yl;
-
-  dx += x;
-  dy += y;
-
-  movementflag = 1;
-}
-
 // Use interrupt to maximize the response time of button press.
 void Btn1ISR(void) {
-  if(!Btn1)
+  if(!Btn1 && initComplete == 9)
   {
     Mouse.press(MOUSE_LEFT);
     Btn1_buffer = 0x00;
@@ -269,14 +243,13 @@ void Btn1ISR(void) {
 }
 
 void Btn2ISR(void) {
-  if(!Btn2)
+  if(!Btn2 && initComplete == 9)
   {
     Mouse.press(MOUSE_RIGHT);
     Btn2_buffer = 0x00;
     lastCheck = micros();
     Btn2 = true;
-  }
-  
+  }  
 }
 
 void check_button_state() 
@@ -315,12 +288,6 @@ void check_button_state()
   }
 }
 
-void UpdatePointer(void) {  
-  if (initComplete == 9) {
-    readflag = 1;
-  }
-}
-
 void dispRegisters(void) {
   int oreg[7] = {
     0x00, 0x3F, 0x2A, 0x02
@@ -347,41 +314,28 @@ void dispRegisters(void) {
   digitalWrite(ncs, HIGH);
 }
 
-// Getting into burst mode (read data from the sensor continously)
-void startBurst()
-{
-  adns_write_reg(Motion_Burst, 0x00);
-  inBurst = true;      
-  lastTS = micros();
-}
-
-// Getting out from burst mode (mode change to idle)
-void endBurst()
-{
-  inBurst = false;
-}
-
 void loop() {
   byte burstBuffer[12];
   unsigned long elapsed = micros() - lastTS;
 
   check_button_state();
 
-  if(readflag)
+  if(!inBurst)
   {
-    if(!inBurst) startBurst();  // this will turn on inBurst flag
-    readflag = 0;
+    adns_write_reg(Motion_Burst, 0x00); // start burst mode
+    lastTS = micros();
+    inBurst = true;
   }
-
-  if(inBurst && elapsed > 500)  // polling interval : more than > 0.5 ms.
+  
+  if(elapsed > 870)  // polling interval : more than > 0.5 ms.
   {
     adns_com_begin();
     SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE3));
 
     SPI.transfer(Motion_Burst);    
     delayMicroseconds(35); // waits for tSRAD
-          
-    SPI.transfer(burstBuffer, 12);
+
+    SPI.transfer(burstBuffer, 12); // read burst buffer
     delayMicroseconds(1); // tSCLK-NCS for read operation is 120ns
 
     SPI.endTransaction();
@@ -401,7 +355,7 @@ void loop() {
     BYTE[10] = Shutter_Upper     = Shutter LSB
     BYTE[11] = Shutter_Lower     = Shutter MSB, Shutter = shutter is adjusted to keep the average raw data values within normal operating ranges
     */
-
+    
     int motion = (burstBuffer[0] & 0x80) > 0;
     int xl = burstBuffer[2];
     int xh = burstBuffer[3];
@@ -417,23 +371,19 @@ void loop() {
     adns_com_end();
 
     // update only if a movement is detected.
-    if(dx != 0 || dy != 0)
-    {
-      //Serial.print(dx);
-      //Serial.print("\t");
-      //Serial.println(dy);
-      //Serial.println(burstBuffer[6]); // SQUAL
-      Mouse.move(dx, dy, 0);
 
+    if(motion)
+    {
+      signed char mdx = constrain(dx, -127, 127);
+      signed char mdy = constrain(dy, -127, 127);
+      
+      Mouse.move(mdx, mdy, 0);
+      
       dx = 0;
       dy = 0;
-      lastTS = micros();
     }
-  }
-
-  if(elapsed > 500000 && inBurst) // inactivate the burst mode after 500 ms
-  {
-    endBurst();
+    
+    lastTS = micros();
   }
 
   if(Serial.available() > 0)
@@ -447,7 +397,6 @@ void loop() {
         break;
     }
   }
-
 }
 
 unsigned long readNumber()
