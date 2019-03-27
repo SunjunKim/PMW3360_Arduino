@@ -6,6 +6,9 @@ Interfacing PixArt PMW3360 with Arduino
 * Base source code: https://github.com/mrjohnk/PMW3360DM-T2QU by mrjohnk
 * Arduino Pro Micro: https://www.sparkfun.com/products/12640
   * It's compatible with Arduino Micro, Arduino Leonardo
+  * Arduino Micro: https://store.arduino.cc/arduino-micro
+  * Arduino Leonardo: https://www.arduino.cc/en/Main/Arduino_BoardLeonardo
+  * (Theoretically possible, but not tested) Teensy 2.0 (https://www.pjrc.com/store/teensy.html) with Teensyduino (https://www.pjrc.com/teensy/teensyduino.html)
 
 # Pin connection
 ## Description
@@ -54,3 +57,8 @@ Button --- Arduino
   * It outputs 1297 numbers in a plain text (dilimited by space character ' ')
     * [0] -- [1295]: 36x36 array of sensor image
     * [1296]: Surface quality value
+    
+# Wishlist
+ * Test with ARM-based 32bit boards
+ * Deal with the scroll wheel encoder
+ * 16-bit mouse report
