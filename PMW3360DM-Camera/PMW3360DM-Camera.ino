@@ -284,23 +284,19 @@ void loop() {
     Serial.print(pixel, DEC);
     Serial.print(' ');
   }
+
     
-  Serial.println();
   adns_com_end();
 
-  if(Serial.available() > 0)
-  {
-    char c = Serial.read();
-    switch(c)
-    {
-      case 'C':
-        int newCPI = readNumber();
-        setCPI(newCPI);
-        break;
-    }
-  }
+  delay(50);
+  
+  int squal = adns_read_reg(SQUAL);
+  Serial.print(squal);  
+  
+  Serial.println();
 
-  delay(20);
+
+  delay(10);
 }
 
 unsigned long readNumber()

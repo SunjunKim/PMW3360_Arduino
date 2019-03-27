@@ -29,12 +29,28 @@ Module --- Arduino
     MI --- MISO (PB3)
     VI --- 5V
 
+// in Mouse example
 Button --- Arduino
   Left --- Pin 1 (PD3, INT3)
  Right --- Pin 0 (PD2, INT2)
 ```
 
-
-# Command (through serial)
-* C[number] -> Change CPI
-  * Example) C1200 -> Change CPI value to 1200.
+# Sketch Descriptions
+* Module/Arduino Examples/
+  * Examples provided by https://github.com/mrjohnk/PMW3360DM-T2QU
+* PMW3360DM-Burst
+  * Minimal example for busrt read on PMW3360 sensor
+  * displacement in X and Y axis are printed when a motion is detected.
+  * Serial Monitor is a nice way to visualize the result.
+* PMW3360DM-Mouse
+  * Fully functional mouse (w. 1k polling rate) example with two buttons (left, right)
+  * Default CPI and debounce time can be set (see #define sections in the source code)
+  * Commands (newline (\n) should be placed at the end of each command)
+    * Q: toggle surface quality report (can be seen thorugh Serial Monitor or Serial Plotter)
+    * I: print device signature
+    * C[number]: Set cpi level, example) C1600\n   = set CPI to 1600.
+* PMW3360DM-Camera
+  * See raw image captured from the sensor
+  * It outputs 1297 numbers in a plain text (dilimited by space character ' ')
+    * [0] -- [1295]: 36x36 array of sensor image
+    * [1296]: Surface quality value

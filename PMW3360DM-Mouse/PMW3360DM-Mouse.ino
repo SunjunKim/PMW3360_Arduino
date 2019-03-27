@@ -3,9 +3,14 @@
 #include <avr/pgmspace.h>
 
 // Configurations
-// The CPI value should be in between 100 -- 12000
-#define CPI       1600
+// The default CPI value should be in between 100 -- 12000
+#define CPI       1200
 #define DEBOUNCE  10   //unit = ms.
+
+//Set this to a pin your interrupt feature is on
+#define Btn1_Interrupt_Pin 1  // left button
+#define Btn2_Interrupt_Pin 0  // right button
+
 
 // Registers
 #define Product_ID  0x00
@@ -58,22 +63,18 @@
 #define Raw_Data_Burst  0x64
 #define LiftCutoff_Tune2  0x65
 
-//Set this to a pin your interrupt feature is on
-#define Motion_Interrupt_Pin 7
-#define Btn1_Interrupt_Pin 1  // left button
-#define Btn2_Interrupt_Pin 0  // right button
-
-
 const int ncs = 10;  // This is the SPI "slave select" pin that the sensor is hooked up to
 const int reset = 8; // Optional
 
+// button debounce buffer
 bool Btn1 = false;
 bool Btn2 = false;
 uint8_t Btn1_buffer = 0xFF;
 uint8_t Btn2_buffer = 0xFF;
 
 byte initComplete = 0;
-bool inBurst = false;
+bool inBurst = false;   // in busrt mode
+bool reportSQ = false;  // report surface quality
 long dx, dy;
 
 unsigned long lastTS;
@@ -86,8 +87,8 @@ extern const unsigned char firmware_data[];
 void setup() {
   Serial.begin(9600);
 
-  pinMode (ncs, OUTPUT);
-  pinMode(reset, INPUT);
+  pinMode(ncs, OUTPUT);
+  pinMode(reset, INPUT_PULLUP);
   
   pinMode(Btn1_Interrupt_Pin, INPUT_PULLUP);
   pinMode(Btn2_Interrupt_Pin, INPUT_PULLUP);
@@ -182,7 +183,7 @@ void adns_upload_firmware() {
   //Read the SROM_ID register to verify the ID before any other register reads or writes.
   adns_read_reg(SROM_ID);
 
-  //Write 0x00 to Config2 register for wired mouse or 0x20 for wireless mouse design.
+  //Write 0x00 (rest disable) to Config2 register for wired mouse or 0x20 for wireless mouse design. 
   adns_write_reg(Config2, 0x00);
 
   adns_com_end();
@@ -192,12 +193,15 @@ void setCPI(int cpi)
 {
   int cpival = constrain((cpi/100)-1, 0, 0x77); // limits to 0--119 
 
+  
   adns_com_begin();
   adns_write_reg(Config1, cpival);
   adns_com_end();
 
-  Serial.print("Set cpi to ");
+  Serial.print("Got ");
   Serial.println(cpi);
+  Serial.print("Set cpi to ");
+  Serial.println((cpival + 1)*100);
 }
 
 void performStartup(void) {
@@ -279,6 +283,7 @@ void Btn2ISR(void) {
   Btn2_buffer = Btn2_buffer << 1 | val;
 }
 
+// Delayed release when fast press happens
 void check_button_state() 
 {
   unsigned long elapsed = micros() - lastButtonCheck;
@@ -363,7 +368,9 @@ void loop() {
     SPI.endTransaction();
     /*
     BYTE[00] = Motion    = if the 7th bit is 1, a motion is detected.
-    BYTE[01] = Observation  
+           ==> 7 bit: MOT (1 when motion is detected)
+           ==> 3 bit: 0 when chip is on surface / 1 when off surface
+           ] = Observation  
     BYTE[02] = Delta_X_L = dx (LSB)
     BYTE[03] = Delta_X_H = dx (MSB) 
     BYTE[04] = Delta_Y_L = dy (LSB)
@@ -379,10 +386,14 @@ void loop() {
     */
     
     int motion = (burstBuffer[0] & 0x80) > 0;
+    int surface = (burstBuffer[0] & 0x08) > 0;   // 0 if on surface / 1 if off surface
+ 
     int xl = burstBuffer[2];
     int xh = burstBuffer[3];
     int yl = burstBuffer[4];
     int yh = burstBuffer[5];
+
+    int squal = burstBuffer[6];
     
     int x = xh<<8 | xl;
     int y = yh<<8 | yl;
@@ -404,16 +415,25 @@ void loop() {
       dx = 0;
       dy = 0;
     }
+
+    if(reportSQ && !surface)  // print surface quality
+    {
+      Serial.println(squal);
+    }
     
     lastTS = micros();
   }
 
+  // command process routine
   if(Serial.available() > 0)
   {
     char c = Serial.read();
     switch(c)
     {
-      case 'I':   // sensor info
+      case 'Q':   // Toggle reporting surface quality
+        reportSQ = !reportSQ;
+        break;
+      case 'I':   // sensor info (signature)
         inBurst = false;
         delay(500);
         dispRegisters();
