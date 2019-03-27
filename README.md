@@ -1,5 +1,5 @@
 # PMW3360_Arduino
-Interfacing PixArt PMW3360 with Arduino
+Interfacing PixArt PMW3360 with ATMega32u4 based Arduino boards
 
 # Parts info
 * PMW3360 Module: https://www.tindie.com/products/jkicklighter/pmw3360-motion-sensor/ by JACK Enterprises
