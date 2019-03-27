@@ -3,7 +3,7 @@ Interfacing PixArt PMW3360 with ATMega32u4 based Arduino boards
 
 # Parts info
 * PMW3360 Module: https://www.tindie.com/products/jkicklighter/pmw3360-motion-sensor/ by JACK Enterprises
-  * ![PMW3360 Module Image](img/tindie_sensor_image.jpg?raw=true "PMW3360 Module" | width=100)
+  * <img src="img/tindie_sensor_image.jpg" width="200" alt="PMW3360 Module Image">
 * Base source code: https://github.com/mrjohnk/PMW3360DM-T2QU by mrjohnk
 * Arduino Pro Micro: https://www.sparkfun.com/products/12640
   * It's compatible with Arduino Micro, Arduino Leonardo
