@@ -3,6 +3,7 @@ Interfacing PixArt PMW3360 with ATMega32u4 based Arduino boards
 
 # Parts info
 * PMW3360 Module: https://www.tindie.com/products/jkicklighter/pmw3360-motion-sensor/ by JACK Enterprises
+  * ![PMW3360 Module Image](img/tindie_sensor_image.jpg?raw=true "PMW3360 Module")
 * Base source code: https://github.com/mrjohnk/PMW3360DM-T2QU by mrjohnk
 * Arduino Pro Micro: https://www.sparkfun.com/products/12640
   * It's compatible with Arduino Micro, Arduino Leonardo
@@ -62,3 +63,7 @@ Button --- Arduino
  * Test with ARM-based 32bit boards
  * Deal with the scroll wheel encoder
  * 16-bit mouse report
+
+# Example construction
+  * ![Image that shows wiring between Arduino and PMW3360 sensor module](img/mouse_example.jpg?raw=true "Mouse-Arduino Pro Micro connection")
+  * ![Image that shows all the components crumpled inside a mouse](img/mouse_example2.jpg?raw=true "All things crumpled inside a mouse shell")
