@@ -12,7 +12,6 @@ Interfacing PixArt PMW3360 with ATMega32u4 based Arduino boards
   * (Theoretically possible, but not tested) Teensy 2.0 (https://www.pjrc.com/store/teensy.html) with Teensyduino (https://www.pjrc.com/teensy/teensyduino.html)
 
 # Pin connection
-## Description
 * MI = MISO
 * MO = MOSI
 * SS = Slave Select / Chip Select
