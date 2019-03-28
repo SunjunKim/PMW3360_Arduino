@@ -22,20 +22,22 @@ Interfacing PixArt PMW3360 with ATMega32u4 based Arduino boards
 * VI = Voltage in up to +5.5V
 
 ```
-Module --- Arduino
-    RS --- (NONE)
-    GD --- GND
-    MT --- Pin 7 (PE6, INT6) -> movement interrupt
-    SS --- Pin 10 (PB6)
-    SC --- SCK (PB1)
-    MO --- MOSI (PB2)
-    MI --- MISO (PB3)
-    VI --- 5V
+[Module] --- [Arduino]
+      RS --- (NONE)
+      GD --- GND
+      MT --- Pin 7 (PE6, INT6) -> movement interrupt
+      SS --- Pin 10 (PB6)
+      SC --- SCK (PB1)
+      MO --- MOSI (PB2)
+      MI --- MISO (PB3)
+      VI --- 5V
 
 // in Mouse example
-Button --- Arduino
-  Left --- Pin 1 (PD3, INT3)
- Right --- Pin 0 (PD2, INT2)
+[Button] --- [Arduino]
+    Left --- Pin 1 (PD3, INT3)
+   Right --- Pin 0 (PD2, INT2)
+   
+* Connect the other pole of a button to GND
 ```
 
 # Sketch Descriptions
