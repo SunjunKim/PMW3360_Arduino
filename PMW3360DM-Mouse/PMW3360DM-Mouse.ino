@@ -7,10 +7,10 @@
 #define CPI       1200
 #define DEBOUNCE  10   //unit = ms.
 
-//Set this to a pin your interrupt feature is on
-#define Btn1_Interrupt_Pin 1  // left button
-#define Btn2_Interrupt_Pin 0  // right button
-
+//Set this to a pin your buttons are attached
+#define NUMBTN   2 
+#define Btn1_Pin 1  // left button
+#define Btn2_Pin 0  // right button
 
 // Registers
 #define Product_ID  0x00
@@ -66,11 +66,10 @@
 const int ncs = 10;  // This is the SPI "slave select" pin that the sensor is hooked up to
 const int reset = 8; // Optional
 
-// button debounce buffer
-bool Btn1 = false;
-bool Btn2 = false;
-uint8_t Btn1_buffer = 0xFF;
-uint8_t Btn2_buffer = 0xFF;
+int Btn_pins[NUMBTN] = { Btn1_Pin, Btn2_Pin };
+bool Btns[NUMBTN] = {false, false};      // button state indicator
+uint8_t Btn_buffers[NUMBTN] = {0xFF, 0xFF}; // button debounce buffer  
+char Btn_keys[NUMBTN] = { MOUSE_LEFT, MOUSE_RIGHT };
 
 byte initComplete = 0;
 bool inBurst = false;   // in busrt mode
@@ -90,11 +89,9 @@ void setup() {
   pinMode(ncs, OUTPUT);
   pinMode(reset, INPUT_PULLUP);
   
-  pinMode(Btn1_Interrupt_Pin, INPUT_PULLUP);
-  pinMode(Btn2_Interrupt_Pin, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(Btn1_Interrupt_Pin), Btn1ISR, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(Btn2_Interrupt_Pin), Btn2ISR, CHANGE);
-
+  pinMode(Btn1_Pin, INPUT_PULLUP);
+  pinMode(Btn2_Pin, INPUT_PULLUP);
+  
   SPI.begin();
   SPI.setDataMode(SPI_MODE3);
   SPI.setBitOrder(MSBFIRST);
@@ -235,81 +232,42 @@ void performStartup(void) {
   Serial.println("Optical Chip Initialized");
 }
 
-// Use interrupt to maximize the responsiveness of button press & release events.
-// Button pin read: active LOW (=ON) / idle HIGH (=OFF)
-void Btn1ISR(void) {
-  int val = digitalRead(Btn1_Interrupt_Pin);
-  
-  if(initComplete != 9)
-    return;
-
-  // Turn button ON when the buffer is filled with OFF for the DEBOUNCE TIME
-  if(!Btn1 && val == LOW && Btn1_buffer == 0xFF)    
-  {
-    Mouse.press(MOUSE_LEFT);
-    lastButtonCheck = micros();
-    Btn1 = true;
-  }
-  // Turn button OFF when the buffer is filled with ON for the DEBOUNCE TIME
-  else if(Btn1 && val == HIGH && Btn1_buffer == 0x00) 
-  {
-    Mouse.release(MOUSE_LEFT);
-    lastButtonCheck = micros();
-    Btn1 = false;
-  }
-  
-  Btn1_buffer = Btn1_buffer << 1 | val;
-}
-
-void Btn2ISR(void) {
-  int val = digitalRead(Btn2_Interrupt_Pin);
-  
-  if(initComplete != 9)
-    return;
-    
-  if(!Btn2 && val == LOW &&  Btn2_buffer == 0xFF)
-  {
-    Mouse.press(MOUSE_RIGHT);
-    lastButtonCheck = micros();
-    Btn2 = true;
-  }
-  else if(Btn2 && val == HIGH &&  Btn2_buffer == 0x00)
-  {
-    Mouse.release(MOUSE_RIGHT);
-    lastButtonCheck = micros();
-    Btn2 = false;
-  }  
-
-  Btn2_buffer = Btn2_buffer << 1 | val;
-}
-
-// Delayed release when fast press happens
+// Button state checkup routine
 void check_button_state() 
 {
+  // runs only after initialization
+  if(initComplete != 9)
+    return;
+
   unsigned long elapsed = micros() - lastButtonCheck;
   
-  // Update at period of 1/8 of the DEBOUNCE time
+  // Update at a period of 1/8 of the DEBOUNCE time
   if(elapsed < (DEBOUNCE * 1000UL / 8))
     return;
   
   lastButtonCheck = micros();
-  
-  int btn1_state = digitalRead(Btn1_Interrupt_Pin);
-  int btn2_state = digitalRead(Btn2_Interrupt_Pin);
-  // Fill the buffers with new button state bits
-  Btn1_buffer = Btn1_buffer << 1 | btn1_state; 
-  Btn2_buffer = Btn2_buffer << 1 | btn2_state;
+    
+  // Fast Debounce (works with 0 latency most of the time)
+  for(int i=0;i < NUMBTN ; i++)
+  {
+    int btn_state = digitalRead(Btn_pins[i]);
+    Btn_buffers[i] = Btn_buffers[i] << 1 | btn_state; 
 
-  // force release when consequent off state (for the DEBOUNCE time) is detected
-  if(Btn1 && Btn1_buffer == 0xFF)
-  {
-    Mouse.release(MOUSE_LEFT);
-    Btn1 = false;
-  }
-  if(Btn2 && Btn2_buffer == 0xFF)
-  {
-    Mouse.release(MOUSE_RIGHT);
-    Btn2 = false;
+    if(!Btns[i] && Btn_buffers[i] == 0xFE)  // button pressed for the first time
+    {
+      Mouse.press(Btn_keys[i]);
+      Btns[i] = true;
+    }
+    else if(Btns[i] && Btn_buffers[i] == 0x01) // button released after stabilized press
+    {
+      Mouse.release(Btn_keys[i]);
+      Btns[i] = false;
+    }
+    else if(Btns[i] && Btn_buffers[i] == 0xFF)  // force release when consequent off state (for the DEBOUNCE time) is detected
+    {
+      Mouse.release(Btn_keys[i]);
+      Btns[i] = false;
+    }
   }
 }
 
@@ -435,7 +393,6 @@ void loop() {
         break;
       case 'I':   // sensor info (signature)
         inBurst = false;
-        delay(500);
         dispRegisters();
         break;
       case 'C':   // set CPI
