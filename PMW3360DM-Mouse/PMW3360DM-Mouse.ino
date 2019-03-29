@@ -1,4 +1,5 @@
-#include <Mouse.h>
+// Advanced Mouse Example
+#include <AdvMouse.h>
 #include <SPI.h>
 #include <avr/pgmspace.h>
 
@@ -108,7 +109,7 @@ void setup() {
   initComplete = 9;
 
   lastTS = micros();
-  Mouse.begin();
+  AdvMouse.begin();
 }
 
 void adns_com_begin() {
@@ -255,17 +256,17 @@ void check_button_state()
 
     if(!Btns[i] && Btn_buffers[i] == 0xFE)  // button pressed for the first time
     {
-      Mouse.press(Btn_keys[i]);
+      AdvMouse.press(Btn_keys[i]);
       Btns[i] = true;
     }
     else if(Btns[i] && Btn_buffers[i] == 0x01) // button released after stabilized press
     {
-      Mouse.release(Btn_keys[i]);
+      AdvMouse.release(Btn_keys[i]);
       Btns[i] = false;
     }
     else if(Btns[i] && Btn_buffers[i] == 0xFF)  // force release when consequent off state (for the DEBOUNCE time) is detected
     {
-      Mouse.release(Btn_keys[i]);
+      AdvMouse.release(Btn_keys[i]);
       Btns[i] = false;
     }
   }
@@ -368,7 +369,7 @@ void loop() {
       signed char mdx = constrain(dx, -127, 127);
       signed char mdy = constrain(dy, -127, 127);
       
-      Mouse.move(mdx, mdy, 0);
+      AdvMouse.move(mdx, mdy, 0);
       
       dx = 0;
       dy = 0;

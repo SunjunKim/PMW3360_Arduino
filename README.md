@@ -58,6 +58,7 @@ Interfacing PixArt PMW3360 with ATMega32u4 based Arduino boards
     * [0] -- [1295]: 36x36 array of sensor image
     * [1296]: Surface quality value
   * A GUI version visualizer (PMW3360DM_Camera_Viewer/) is implemented on Processing (http://processing.org). 
+    * Press 's' to save the captured frame.
 * (Legacy) Module/Arduino Examples/
   * Examples provided by https://github.com/mrjohnk/PMW3360DM-T2QU
 
