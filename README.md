@@ -67,6 +67,7 @@ Interfacing PixArt PMW3360 with ATMega32u4 based Arduino boards
     * For PMW3360DM-Camera sketch, load PMW3360DM_Camera_Viewer sketch on Processing and run.
     
 # Wishlist
+ * 3D Printable mouse shell
  * Test with ARM-based 32bit boards
  * Deal with the scroll wheel encoder
  * 16-bit mouse report (https://www.overclock.net/forum/375-mice/1561041-reverse-engineering-3366-a-35.html#post26314321)
