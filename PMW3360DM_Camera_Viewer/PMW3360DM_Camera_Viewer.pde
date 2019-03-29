@@ -56,3 +56,9 @@ void draw()
   fill(255);
   text("SQUAL = "+lastSQ, 10, 375);
 }
+
+void keyPressed()
+{
+  if(key == 's')
+    save("frame.png");
+}
