@@ -42,9 +42,9 @@ Interfacing PixArt PMW3360 with ATMega32u4 based Arduino boards
 
 # Sketch Descriptions
 * PMW3360DM-Burst/
-  * Minimal example for busrt read on PMW3360 sensor
+  * Minimal example for burst read on PMW3360 sensor
   * displacement in X and Y axis are printed when a motion is detected.
-  * Serial Monitor is a nice way to visualize the result.
+  * Serial Plotter is a nice way to visualize the result.
 * PMW3360DM-Mouse/
   * Fully functional mouse (w. 1k polling rate) example with two buttons (left, right)
   * Default CPI and debounce time can be set (see #define sections in the source code)
