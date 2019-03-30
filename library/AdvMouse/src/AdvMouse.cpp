@@ -23,77 +23,42 @@
 
 #if defined(_USING_HID)
 
-/*
-static const uint8_t _hidReportDescriptor[] PROGMEM = {
-  
-  //  Mouse
-    0x05, 0x01,                    // USAGE_PAGE (Generic Desktop)  // 54
-    0x09, 0x02,                    // USAGE (Mouse)
-    0xa1, 0x01,                    // COLLECTION (Application)
-    0x09, 0x01,                    //   USAGE (Pointer)
-    0xa1, 0x00,                    //   COLLECTION (Physical)
-    0x85, 0x01,                    //     REPORT_ID (1)
-    0x05, 0x09,                    //     USAGE_PAGE (Button)
-    0x19, 0x01,                    //     USAGE_MINIMUM (Button 1)
-    0x29, 0x03,                    //     USAGE_MAXIMUM (Button 3)
-    0x15, 0x00,                    //     LOGICAL_MINIMUM (0)
-    0x25, 0x01,                    //     LOGICAL_MAXIMUM (1)
-    0x95, 0x03,                    //     REPORT_COUNT (3)
-    0x75, 0x01,                    //     REPORT_SIZE (1)
-    0x81, 0x02,                    //     INPUT (Data,Var,Abs)
-    0x95, 0x01,                    //     REPORT_COUNT (1)
-    0x75, 0x05,                    //     REPORT_SIZE (5)
-    0x81, 0x03,                    //     INPUT (Cnst,Var,Abs)
-    0x05, 0x01,                    //     USAGE_PAGE (Generic Desktop)
-    0x09, 0x30,                    //     USAGE (X)
-    0x09, 0x31,                    //     USAGE (Y)
-    0x09, 0x38,                    //     USAGE (Wheel)
-    0x15, 0x81,                    //     LOGICAL_MINIMUM (-127)
-    0x25, 0x7f,                    //     LOGICAL_MAXIMUM (127)
-    0x75, 0x08,                    //     REPORT_SIZE (8)
-    0x95, 0x03,                    //     REPORT_COUNT (3)
-    0x81, 0x06,                    //     INPUT (Data,Var,Rel)
-    0xc0,                          //   END_COLLECTION
-    0xc0,                          // END_COLLECTION
-};*/
-
 // Report format borrowed from bst's bst3360_public.zip
 // https://www.overclock.net/forum/375-mice/1561041-reverse-engineering-3366-a-35.html#post26314321
-
 static const uint8_t _hidReportDescriptor[] PROGMEM = {
   0x05, 0x01,   // Usage Page (Generic Desktop)
   0x09, 0x02,   // Usage (Mouse)
   0xA1, 0x01,   // Collection (Application)
-  0x85, 0x01,   // HID report ID = 1 
-  0x05, 0x09,   //   Usage Page (Button)
-  0x19, 0x01,   //   Usage Minimum (Button #1)
-  0x29, 0x05,   //   Usage Maximum (Button #5)
-  0x15, 0x00,   //   Logical Minimum (0)
-  0x25, 0x01,   //   Logical Maximum (1)
-  0x95, 0x05,   //   Report Count (5)
-  0x75, 0x01,   //   Report Size (1)
-  0x81, 0x02,   //   Input (Data, Variable, Absolute)
-  0x95, 0x01,   //   Report Count (1)
-  0x75, 0x03,   //   Report Size (3)
-  0x81, 0x03,   //   Input (Constant) // Byte 1
-  0x05, 0x01,   //   Usage Page (Generic Desktop)
-  0x09, 0x30,   //   Usage (X)
-  0x09, 0x31,   //   Usage (Y)
-  0x16, 0x01, 0x80, //   Logical Minimum (-32,767)
-  0x26, 0xFF, 0x7F, //   Logical Maximum (32,767)
-  0x36, 0x01, 0x80, //   Physical Minimum (-32,767)
-  0x46, 0xFF, 0x7F, //   Physical Maxiumum (32,767)
-  0x75, 0x10,   //   Report Size (16),
-  0x95, 0x02,   //   Report Count (2),
-  0x81, 0x06,   //   Input (Data, Variable, Relative) // Byte 3, 5
-  0x09, 0x38,   //   Usage (Wheel)
-  0x15, 0x81,   //   Logical Minimum (-127)
-  0x25, 0x7F,   //   Logical Maximum (127)
-  0x35, 0x81,   //   Phyiscal Minimum (-127)
-  0x45, 0x7F,   //   Physical Maxiumum (127)
-  0x75, 0x08,   //   Report Size (8)
-  0x95, 0x01,   //   Report Count (1)
-  0x81, 0x06,   //   Input (Data, Variable, Relative) // Byte 6
+    0x85, 0x01,   // HID report ID = 1 
+    0x05, 0x09,   //   Usage Page (Button)
+      0x19, 0x01,   //   Usage Minimum (Button #1)
+      0x29, 0x05,   //   Usage Maximum (Button #5)
+      0x15, 0x00,   //   Logical Minimum (0)
+      0x25, 0x01,   //   Logical Maximum (1)
+      0x95, 0x05,   //   Report Count (5)
+      0x75, 0x01,   //   Report Size (1)
+      0x81, 0x02,   //   Input (Data, Variable, Absolute)
+      0x95, 0x01,   //   Report Count (1)
+      0x75, 0x03,   //   Report Size (3)
+      0x81, 0x03,   //   Input (Constant) // Byte 1
+    0x05, 0x01,   //   Usage Page (Generic Desktop)
+      0x09, 0x30,   //   Usage (X)
+      0x09, 0x31,   //   Usage (Y)
+      0x16, 0x00, 0x80, //   Logical Minimum (-32,768)
+      0x26, 0xFF, 0x7F, //   Logical Maximum (32,767)
+      0x36, 0x00, 0x80, //   Physical Minimum (-32,768)
+      0x46, 0xFF, 0x7F, //   Physical Maxiumum (32,767)
+      0x75, 0x10,   //   Report Size (16),
+      0x95, 0x02,   //   Report Count (2),
+      0x81, 0x06,   //   Input (Data, Variable, Relative) // Byte 3, 5
+      0x09, 0x38,   //   Usage (Wheel)
+      0x15, 0x81,   //   Logical Minimum (-127)
+      0x25, 0x7F,   //   Logical Maximum (127)
+      0x35, 0x81,   //   Phyiscal Minimum (-127)
+      0x45, 0x7F,   //   Physical Maxiumum (127)
+      0x75, 0x08,   //   Report Size (8)
+      0x95, 0x01,   //   Report Count (1)
+      0x81, 0x06,   //   Input (Data, Variable, Relative) // Byte 6
   0xC0      // End Collection
 };
 
@@ -110,7 +75,7 @@ AdvMouse_::AdvMouse_(void) : _buttons(0)
 
 void AdvMouse_::begin(void) 
 {
-  _isReportSent = true;
+  _isReportSent = false;
 }
 
 void AdvMouse_::end(void) 
