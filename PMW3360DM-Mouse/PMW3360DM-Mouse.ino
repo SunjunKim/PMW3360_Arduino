@@ -366,7 +366,7 @@ void loop() {
 
     if(AdvMouse.needSendReport() || motion)
     {
-
+      AdvMouse.move(dx, dy, 0);
       
       dx = 0;
       dy = 0;
