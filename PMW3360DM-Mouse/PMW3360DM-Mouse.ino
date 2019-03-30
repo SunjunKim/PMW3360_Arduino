@@ -75,7 +75,7 @@ char Btn_keys[NUMBTN] = { MOUSE_LEFT, MOUSE_RIGHT };
 byte initComplete = 0;
 bool inBurst = false;   // in busrt mode
 bool reportSQ = false;  // report surface quality
-long dx, dy;
+int16_t dx, dy;
 
 unsigned long lastTS;
 unsigned long lastButtonCheck = 0;
@@ -364,12 +364,9 @@ void loop() {
 
     // update only if a movement is detected.
 
-    if(AdvMouse.haveToMove() || motion)
+    if(AdvMouse.needSendReport() || motion)
     {
-      signed char mdx = constrain(dx, -127, 127);
-      signed char mdy = constrain(dy, -127, 127);
-      
-      AdvMouse.move(mdx, mdy, 0);
+      AdvMouse.move(dx, dy, 0);
       
       dx = 0;
       dy = 0;
