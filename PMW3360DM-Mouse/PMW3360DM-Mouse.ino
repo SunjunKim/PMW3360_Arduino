@@ -1,7 +1,22 @@
-// Advanced Mouse implementation
-#include <AdvMouse.h>
+// Uncomment this line to activate an advanced mouse mode
+// Need to install AdvMouse library (copy /library/AdvMouse to the Arduino libraries)
+#define ADVANCE_MODE
+
+
 #include <SPI.h>
 #include <avr/pgmspace.h>
+
+#ifdef ADVANCE_MODE 
+  #include <AdvMouse.h>
+  #define MOUSE_BEGIN       AdvMouse.begin()
+  #define MOUSE_PRESS(x)    AdvMouse.press_(x)
+  #define MOUSE_RELEASE(x)  AdvMouse.release_(x)
+#else
+  #include <Mouse.h>
+  #define MOUSE_BEGIN       Mouse.begin()
+  #define MOUSE_PRESS(x)    Mouse.press(x)
+  #define MOUSE_RELEASE(x)  Mouse.release(x)
+#endif
 
 // Configurations
 // The default CPI value should be in between 100 -- 12000
@@ -109,7 +124,8 @@ void setup() {
   initComplete = 9;
 
   lastTS = micros();
-  AdvMouse.begin();
+
+  MOUSE_BEGIN;
 }
 
 void adns_com_begin() {
@@ -256,19 +272,17 @@ void check_button_state()
 
     if(!Btns[i] && Btn_buffers[i] == 0xFE)  // button pressed for the first time
     {
-      AdvMouse.press_(Btn_keys[i]);
+      MOUSE_PRESS(Btn_keys[i]);
       Btns[i] = true;
     }
-    else if(Btns[i] && Btn_buffers[i] == 0x01) // button released after stabilized press
+    else if( (Btns[i] && Btn_buffers[i] == 0x01) // button released after stabilized press
+            // force release when consequent off state (for the DEBOUNCE time) is detected 
+            || (Btns[i] && Btn_buffers[i] == 0xFF) ) 
     {
-      AdvMouse.release_(Btn_keys[i]);
+      MOUSE_RELEASE(Btn_keys[i]);
       Btns[i] = false;
     }
-    else if(Btns[i] && Btn_buffers[i] == 0xFF)  // force release when consequent off state (for the DEBOUNCE time) is detected
-    {
-      AdvMouse.release_(Btn_keys[i]);
-      Btns[i] = false;
-    }
+    
   }
 }
 
@@ -314,7 +328,6 @@ void loop() {
   
   if(elapsed > 870)  // polling interval : more than > 0.5 ms.
   {
-    
     adns_com_begin();
     SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE3));
 
@@ -364,6 +377,7 @@ void loop() {
 
     // update only if a movement is detected.
 
+#ifdef ADVANCE_MODE 
     if(AdvMouse.needSendReport() || motion)
     {
       AdvMouse.move(dx, dy, 0);
@@ -371,6 +385,18 @@ void loop() {
       dx = 0;
       dy = 0;
     }
+#else
+    if(motion)
+    {
+      signed char mdx = constrain(dx, -127, 127);
+      signed char mdy = constrain(dy, -127, 127);
+      
+      Mouse.move(mdx, mdy, 0);
+      
+      dx = 0;
+      dy = 0;
+    }
+#endif
 
     if(reportSQ && !surface)  // print surface quality
     {
