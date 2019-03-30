@@ -1,4 +1,4 @@
-// Advanced Mouse Example
+// Advanced Mouse implementation
 #include <AdvMouse.h>
 #include <SPI.h>
 #include <avr/pgmspace.h>
@@ -256,17 +256,17 @@ void check_button_state()
 
     if(!Btns[i] && Btn_buffers[i] == 0xFE)  // button pressed for the first time
     {
-      AdvMouse.press(Btn_keys[i]);
+      AdvMouse.press_(Btn_keys[i]);
       Btns[i] = true;
     }
     else if(Btns[i] && Btn_buffers[i] == 0x01) // button released after stabilized press
     {
-      AdvMouse.release(Btn_keys[i]);
+      AdvMouse.release_(Btn_keys[i]);
       Btns[i] = false;
     }
     else if(Btns[i] && Btn_buffers[i] == 0xFF)  // force release when consequent off state (for the DEBOUNCE time) is detected
     {
-      AdvMouse.release(Btn_keys[i]);
+      AdvMouse.release_(Btn_keys[i]);
       Btns[i] = false;
     }
   }
@@ -364,7 +364,7 @@ void loop() {
 
     // update only if a movement is detected.
 
-    if(motion)
+    if(AdvMouse.haveToMove() || motion)
     {
       signed char mdx = constrain(dx, -127, 127);
       signed char mdy = constrain(dy, -127, 127);

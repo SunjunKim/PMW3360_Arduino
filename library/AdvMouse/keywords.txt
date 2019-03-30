@@ -1,0 +1,27 @@
+#######################################
+# Syntax Coloring Map For Mouse
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+AdvMouse	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+click	KEYWORD2
+move	KEYWORD2
+press	KEYWORD2
+release	KEYWORD2
+press_	KEYWORD2
+release_	KEYWORD2
+haveToMove	KEYWORD2
+isPressed KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
