@@ -1,13 +1,23 @@
 = Advanced Mouse Library for Arduino =
 
-This library allows an Arduino board with USB capabilities to act as a Mouse.
+This library allows an Arduino board with USB capabilities to act as an advanced Mouse.
+* Base code (LGPL): https://www.arduino.cc/reference/en/language/functions/usb/mouse/
 
-For more information about this library please visit us at
-https://www.arduino.cc/reference/en/language/functions/usb/mouse/
+On top of the original mouse example, it improves following features:
+
+* Button press without report
+  * press / release functions send the USB report immediately.
+  * press_ / release_ functions just records a button press/release without a report.
+    The recorded buttons are finally sent when move() function is called.
+  * Function needSendReport() reports [true] if there's any unsent button event.
+  * 16-bit X/Y move. In the original Arduino Mouse library, x/y movement report 
+    is limited to (-127,127) range with a single report. Now you can send the movement
+    report in (-32767, 32767) range.
+  * Extra button support. MOUSE_BACK / MOUSE_FORWARD will work as back/forward buttons.
 
 == License ==
 
-Copyright (c) Arduino LLC. All right reserved.
+Copyright (c) Sunjun Kim. All right reserved.
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public

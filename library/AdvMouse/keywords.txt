@@ -5,7 +5,6 @@
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
-
 AdvMouse	KEYWORD1
 
 #######################################
@@ -19,9 +18,14 @@ press	KEYWORD2
 release	KEYWORD2
 press_	KEYWORD2
 release_	KEYWORD2
-haveToMove	KEYWORD2
+needSendReport	KEYWORD2
 isPressed KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
 #######################################
+MOUSE_LEFT		LITERAL1
+MOUSE_RIGHT   	LITERAL1
+MOUSE_MIDDLE  	LITERAL1
+MOUSE_BACK    	LITERAL1
+MOUSE_FORWARD 	LITERAL1

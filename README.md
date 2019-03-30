@@ -64,15 +64,16 @@ Interfacing PixArt PMW3360 with ATMega32u4 based Arduino boards
 
 # How to use
   * Build the circuit as described.
+  * (PMW3360DM-Mouse only) Copy the /library/AdvMouse/ to your Arduino library folder
   * Load one of the desired skectch on Arduino IDE.
     * For PMW3360DM-Camera sketch, load PMW3360DM_Camera_Viewer sketch on Processing and run.
     
 # Wishlist
+ * ~~16-bit mouse report (https://www.overclock.net/forum/375-mice/1561041-reverse-engineering-3366-a-35.html#post26314321)~~
  * 3D Printable mouse shell
  * Test with ARM-based 32bit boards
  * Deal with the scroll wheel encoder
- * 16-bit mouse report (https://www.overclock.net/forum/375-mice/1561041-reverse-engineering-3366-a-35.html#post26314321)
-
+ 
 # Example construction
   * ![Image that shows wiring between Arduino and PMW3360 sensor module](img/mouse_example.jpg?raw=true "Mouse-Arduino Pro Micro connection")
   * ![Image that shows all the components crumpled inside a mouse](img/mouse_example2.jpg?raw=true "All things crumpled inside a mouse shell")
